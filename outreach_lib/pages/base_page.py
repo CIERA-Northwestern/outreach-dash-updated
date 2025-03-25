@@ -77,22 +77,18 @@ def main(config_fp: str, user_utils: types.ModuleType = None):
         pass
 
     # for future reference, if you want to set artificial bounds for year/timescale, do it here
-    min_year = data['preprocessed']['Start Date'].dt.year.min()
-    max_year = data['preprocessed']['Start Date'].dt.year.max()
+    min_year = data['preprocessed']['Date'].dt.year.min()
+    max_year = data['preprocessed']['Date'].dt.year.max()
     
     
    
     # Data axes
     # entered search category passed down to filter settings for further specification
-    st.subheader('Data Axes')
-    
+    st.subheader('Data Axes')    
     st.text("Note: entries from before Jan 1st, 2014 are classified as LEGACY for the purposes of data categorization")
-    st.text("LEGACY classification carries different connotations... TO ASK ABOUT")
 
     axes_object = builder.interface.request_data_axes(st, max_year, min_year)
-    if axes_object['groupby_column'] == 'Origin (International/Domestic)':
-        builder.settings.common['data']['groupby_column'] = 'International'
-    
+
     # filters data as per specs
     builder.interface.process_filter_settings(
         st,
@@ -105,18 +101,6 @@ def main(config_fp: str, user_utils: types.ModuleType = None):
         data['preprocessed'],
         builder.settings.common['filters'],
     )
-    
-    ## this is a fun tool that will help us later
-    # its to improve performance dont worry about it
-    defragment = False
-    if axes_object['groupby_column'] == "Visitor Institution:All":
-        defragment = True
-
-    if 'Visitor Institution:' in axes_object['groupby_column']:
-        builder.settings.common['data']['groupby_column'] = 'Visitor Institution'
-    if 'Host:' in axes_object['groupby_column']:
-        builder.settings.common['data']['groupby_column']= 'Host'
-    
     
     # filters data by year bounds selected (so that only entries which fall into this year-bound are displayed)
     reverse_month_dict = {1:'January', 2:'February', 3:'March', 4:'April', 5:'May',6:'June', 7:'July', 8:'August', 9:'September', 10:'October', 11:'November', 12:'December'}
@@ -134,7 +118,7 @@ def main(config_fp: str, user_utils: types.ModuleType = None):
 
 
         data['selected']['Reindexed Year'] = utils.get_year(
-                data['selected']['Start Date'], "{} 1".format(reverse_month_dict[month_start])
+                data['selected']['Date'], "{} 1".format(reverse_month_dict[month_start])
             )
         data['time_adjusted'] = data['selected'][data['selected']['Reindexed Year'] == year_start]
 
@@ -205,19 +189,10 @@ def main(config_fp: str, user_utils: types.ModuleType = None):
         data['totals'] = data['totals'].T
     
     # adds NaN values to dataframe for viewing
-    if not defragment:
-        if 'categorical' in builder.settings.common['filters']:
-            for topic in builder.settings.common['filters']['categorical'][builder.settings.get_settings(common_to_include=['data'])['groupby_column']]:
-                if topic not in data['aggregated'].columns:
-                    data['aggregated'][topic] = [0 for i in range(len(data['aggregated'].index))]
-
-        
-
-        # little subroutine to default cumulative to true when viewing visitor institutions or hosts
-        if ((builder.settings.get_settings(common_to_include=['data'])['groupby_column'] == "Visitor Institution") or
-        (builder.settings.get_settings(common_to_include=['data'])['groupby_column'] == "Host")):
-            builder.settings.common['data']['cumulative'] = True
-            
+    if 'categorical' in builder.settings.common['filters']:
+        for topic in builder.settings.common['filters']['categorical'][builder.settings.get_settings(common_to_include=['data'])['groupby_column']]:
+            if topic not in data['aggregated'].columns:
+                data['aggregated'][topic] = [0 for i in range(len(data['aggregated'].index))]
 
     
     print(builder.settings.common['data'])

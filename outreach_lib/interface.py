@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import matplotlib.font_manager as font_manager
 import seaborn as sns
 
-from visit_dash_lib import utils
+from outreach_lib import utils
 
 from .settings import Settings
 

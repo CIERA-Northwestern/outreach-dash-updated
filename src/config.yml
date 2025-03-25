@@ -13,7 +13,7 @@ figure_dir: ../data/figures
 start_of_year: September 1
 
 # Aesthetic options
-page_title: 'Visit Data'
+page_title: 'Outreach Data'
 # Seaborn color palette to use. More options at https://seaborn.pydata.org/tutorial/color_palettes.html
 color_palette: deep
 
@@ -26,34 +26,31 @@ color_palette: deep
 # Filetree options
 input_dirname: raw_data
 output_dirname: processed_data
-website_data_file_pattern: Visits_Report-*.csv
-press_office_data_file_pattern: press_office*.xls*
-combined_filename: press.csv
+website_data_file_pattern: Outreach_Data-*.csv
 
 # What to group by
 # If you add additional categorical columns to the data, you can specify them here and they will be added to the dashboard.
 groupings:
-  - Host Types
-  - Programs
+  - Event Type
+  - Primary Audience Type
+  - Funding Source
 
 ## Column Classifications
 # The anything that's in a given grouping can be analyzed similarly.
 primary_id_column: index
 id_columns: # Unique identifiers
-  - id
-  - Name
+  - Event Title
 numerical_columns: # Numeric columns that can be summed
-  - Visiting Days
+  - Total Attendees
 date_columns: # Dates
   - Date
 x_columns: # Data will be binned by these along the x-axis
   - Year (Flexible) # For example, a value of 2019 would be grouped into the 2019-2020 financial year
 categorical_columns: # Categorical columns that can be grouped, e.g. all Press Types=="Science" articles
-  - Host Types
-  - Origin (International/Domestic)
-  - Programs
-  - Visitor Institution
-  - Host
+  - Event Type
+  - Primary Audience Type
+  - Funding Source
+
   
 text_columns: # Text columns that can be searched
   - id

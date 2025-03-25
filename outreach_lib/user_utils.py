@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import datetime
 
-from visit_dash_lib import utils
+from outreach_lib import utils
 
 
 def load_data(config):
@@ -107,38 +107,30 @@ def clean_data(raw_df, config):
     
     # Drop rows where 'Date' year is 1970
 
-    cleaned_df = raw_df[raw_df['Start Date (UnixTimestamp -- date=(((UnixTimeStamp/60)/60)/24)+DATE(1970,1,1))'] != 0]
-    cleaned_df = raw_df[raw_df['End Date (UnixTimestamp)'] != 0]
+    cleaned_df = raw_df[raw_df['Date'] != 0]
     
     # Drop weird articles---ancient ones w/o a title or year
+    # Timestamp,Event/Activity Title ,Type of Event,Short description,Date,"Location (Venue, City, State, as applicable)","Funding Source (please list all funding sources for the event, including CIERA, and/or specific grants if you know them)","Grad Students (if none, enter ""None"")","Postdocs  (if none, enter ""None"")","Faculty  (if none, enter ""None"")","Staff (if none, enter ""None"")",Primary Audience Type,Is this event focused on an underrepresented group in STEM? ,Total # of Attendees (approximate),Additional description of audience,Feedback from Audience,"Contact Info (e.g. name of organization, name of contact person, email address, etc.)",Notes/Comments on partners,Final Thoughts
     cleaned_df.dropna(
         axis='rows',
         how='any',
-        subset=['Visitor Institution', 'Name', 'Start Date (UnixTimestamp -- date=(((UnixTimeStamp/60)/60)/24)+DATE(1970,1,1))', 'End Date (UnixTimestamp)'],  
+        subset=['Event Title', 'Event Type', 'Date', 'Location', 'Funding Source', 'Total Attendees'],  
         inplace=True,
     )
     # # Drop drafts
     # cleaned_df = raw_df.drop(
     #     raw_df.index[raw_df['Date'].dt.year == 1970],
     #     axis='rows',
-    # )
-    cleaned_df['Start Date'] = cleaned_df['Start Date (UnixTimestamp -- date=(((UnixTimeStamp/60)/60)/24)+DATE(1970,1,1))'].apply(datetime.datetime.fromtimestamp)
-    cleaned_df['End Date'] = cleaned_df['End Date (UnixTimestamp)'].apply(datetime.datetime.fromtimestamp)
-
+    # 
     
     
-
-    # programmatically determines duration of visit by comparing unixtimestamps
-    cleaned_df['Visiting Days'] = ((cleaned_df['End Date (UnixTimestamp)'] - cleaned_df['Start Date (UnixTimestamp -- date=(((UnixTimeStamp/60)/60)/24)+DATE(1970,1,1))'])/86400)
-
     # Get rid of HTML ampersands
-    for str_column in ['Visitor Institution',]:
+    for str_column in ['Funding Source',]:
         cleaned_df[str_column] = cleaned_df[str_column].str.replace('&amp;', '&')
 
 
     # Handle NaNs, rounding, and other numerical errors
-    columns_to_fill = ['Visiting Days',]
-    cleaned_df[columns_to_fill] = cleaned_df[columns_to_fill].apply(round)
+    #cleaned_df[columns_to_fill] = cleaned_df[columns_to_fill].apply(round)
     cleaned_df.fillna(value='N/A', inplace=True)
 
     return cleaned_df, config
@@ -173,7 +165,7 @@ def preprocess_data(cleaned_df, config):
     # Tweaks to the press data
     #if 'Title (optional)' in preprocessed_df.columns:
     #    preprocessed_df.drop('Title (optional)', axis='columns', inplace=True)
-    #for column in ['Year']:
+    #for column in ['Date']:
     #    preprocessed_df[column] = preprocessed_df[column].astype('Int64')    
 
 
@@ -190,22 +182,20 @@ def preprocess_data(cleaned_df, config):
 
     # flags all data that has end date of pre-Jan 1st, 2014 as "LEGACY" - 
     #  @ request of Kari
+    
+    preprocessed_df['Date'] = pd.to_datetime(preprocessed_df['Date'], errors='coerce')
+
+
+    
     def legacy(date):
         if date.year < 2014:
             return "LEGACY"
         else:
             return "CURRENT"
     
-    preprocessed_df['Legacy'] = preprocessed_df['End Date'].apply(legacy)
+    preprocessed_df['Legacy'] = preprocessed_df['Date'].apply(legacy)
 
-    #converts international boolean into text
-    def nameify(is_int):
-        if bool(is_int):
-            return 'International'
-        else:
-            return 'Domestic'
-        
-    preprocessed_df['International'] = preprocessed_df['ciera_visit_international'].apply(nameify)
+    
     ## SHOULD remove any spaces before or after categories; allowing a bit more flexibility in data entry
     #for group_by_i in config['groupings']:
     #    preprocessed_df[group_by_i] = preprocessed_df[group_by_i].str.strip()
