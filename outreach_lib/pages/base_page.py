@@ -276,7 +276,8 @@ def main(config_fp: str, user_utils: types.ModuleType = None):
     data_option = builder.settings.common['data']['data_options']
     if data_option in ['No Total', 'Only Total', 'Standard']:
         local_key = 'lineplot'
-        st.subheader('Line Plot Visualization')        
+        st.subheader('Line Plot Visualization')
+        '''        
         with st.expander('Lineplot settings'):
             local_opt_keys, common_opt_keys, unset_opt_keys = builder.settings.get_local_global_and_unset(
                 function=builder.data_viewer.lineplot,
@@ -294,15 +295,17 @@ def main(config_fp: str, user_utils: types.ModuleType = None):
                 function = builder.data_viewer.lineplot,
                 local_key=local_key,
             )
-
+        '''
     #constructs line plot based on specifications provided
         if data_option == "No Total":
-            builder.data_viewer.lineplot(
-                    df = data['aggregated'],
-                    month_reindex = month_redef if builder.settings.common['data']['x_column_ind'] == 0 else None, 
-                    year_reindex=years_to_display,
-                    **builder.settings.get_settings(local_key)
-                )
+            builder.data_viewer.testplot(
+                df = data['aggregated'],
+                month_reindex = month_redef if builder.settings.common['data']['x_column_ind'] == 0 else None, 
+                year_reindex = years_to_display,
+                y_label=builder.settings.common['data']['y_column'],
+                x_label=builder.settings.common['data']['x_column'],
+                category=builder.settings.common['data']['groupby_column']
+            )
         elif data_option == "Only Total":
             builder.data_viewer.testplot(
                 df = data['totals'].to_frame(name="totals"),
@@ -314,12 +317,14 @@ def main(config_fp: str, user_utils: types.ModuleType = None):
                 #**builder.settings.get_settings(local_key)
             )
         elif data_option == "Standard":
-            builder.data_viewer.lineplot(
+            builder.data_viewer.testplot(
                 df = data['aggregated'],
                 month_reindex = month_redef if builder.settings.common['data']['x_column_ind'] == 0 else None, 
                 year_reindex = years_to_display,
                 totals = data['totals'],
-                **builder.settings.get_settings(local_key)
+                y_label=builder.settings.common['data']['y_column'],
+                x_label=builder.settings.common['data']['x_column'],
+                category=builder.settings.common['data']['groupby_column']
             )
     # Bar Plot IF data option is aggregated
     elif data_option == "Year Aggregate":
@@ -328,6 +333,7 @@ def main(config_fp: str, user_utils: types.ModuleType = None):
         builder.data_viewer.barplot(
             data['total by instance'],
         )
+    '''
     elif data_option == "testing":
         st.subheader("testing chart; please disregard")
         builder.data_viewer.testplot(
@@ -339,6 +345,7 @@ def main(config_fp: str, user_utils: types.ModuleType = None):
             x_label=builder.settings.common['data']['x_column'],
             category=builder.settings.common['data']['groupby_column']
         )
+    '''
     # View the data directly
     builder.data_viewer.write(data)
 
