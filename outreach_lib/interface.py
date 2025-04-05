@@ -35,8 +35,8 @@ class Interface:
     def request_data_axes(
             self,
             st_loc,
-            max_year,
-            min_year,
+            max_year: int,
+            min_year: int,
             ask_for: list[str] = ['aggregation_method', 'x_column', 'y_column', 'groupby_column'],
             local_key: str = None,
             display_defaults: dict = {},
@@ -84,37 +84,29 @@ class Interface:
             selected_settings[key + '_ind'] = ind
         else:
             selected_settings['aggregation_method'] = aggregation_method
+        
         key = 'x_column'
-        if key in ask_for:
-            value, ind = selectbox(
-                st_loc,
-                'How do you want to time-wise bin data?',
-                options = display_options.get('x_column', self.config['x_columns']),
-                index = display_defaults.get(key + '_ind', 0),
+        month_dict = {'January (Calendar Year)':1, 'February':2, 'March':3,'April (Reporting Year)':4,'May':5,'June':6,'July':7,'August':8,'September (Fiscal Year)':9,'October':10,'November':11,'December':12}
+        col1, col2 = st_loc.columns(2)
+        with col1:
+            value_month, ind_month = selectbox(
+                st_loc, 
+                'starting month for twelve-month recording period',
+                options = list(month_dict.keys())
             )
-            
-            if value == 'Year (Flexible)':
-                month_dict = {'January (Calendar Year)':1, 'February':2, 'March':3,'April (Reporting Year)':4,'May':5,'June':6,'July':7,'August':8,'September (Fiscal Year)':9,'October':10,'November':11,'December':12}
-                col1, col2 = st_loc.columns(2)
-                with col1:
-                    value_month, ind_month = selectbox(
-                        st_loc, 
-                        'starting month for twelve-month recording period',
-                        options = list(month_dict.keys())
-                    )
-                    value = value + ':' + str(month_dict[value_month])
-                with col2:
-                    if month_dict[value_month] >= 9:
-                        min_year = min_year - 1
-                    start_year, end_year = st_loc.select_slider(
-                            'years to view',
-                            options=list(range(min_year,max_year+1)),
-                            value=(min_year, max_year),
-                    )
-                    value = value + ':' + str(start_year) + ':' + str(end_year)
-            
-            selected_settings[key] = value
-            selected_settings[key + '_ind'] = ind
+            value = value + ':' + str(month_dict[value_month])
+        with col2:
+            if month_dict[value_month] >= 9:
+                min_year = min_year - 1
+            start_year, end_year = st_loc.select_slider(
+                    'years to view',
+                    options=list(range(min_year,max_year+1)),
+                    value=(min_year, max_year),
+            )
+            value = value + ':' + str(start_year) + ':' + str(end_year)
+
+        selected_settings[key] = value
+        selected_settings[key + '_ind'] = ind
 
         key = 'y_column'
         if key in ask_for:
@@ -144,14 +136,19 @@ class Interface:
                 options=display_options.get('groupby_column', self.config['categorical_columns']),
                 index=display_defaults.get(key + '_ind', 0),
             )
-            if (value == 'Visitor Institution') or (value == 'Host'):
-                value1, ind1 = selectbox(
-                    st_loc,
-                    'How do you want to sort the data?',
-                    options=['descending order', 'ascending order', 'All'],   
-                )
-                value = value + ":" + value1
 
+
+            ### OUTREACH SPECIFIC
+            if (value == 'Specific Volunteer Metrics'):
+
+                value, ind0 = selectbox(
+                    st_loc,
+                    'Which CIERA group to view?',
+                    options=self.config['metrics_options'],
+                )
+            if value == 'Aggregate Volunteering Comparison':
+                value = 'AVC'
+            ### 
         selected_settings[key] = value
         selected_settings[key + '_ind'] = ind
 
@@ -198,7 +195,7 @@ class Interface:
             tag += ':'
         
         key = 'data_options'
-        options = ['No Total', 'Only Total', 'Standard', 'Year Aggregate']
+        options = ['No Total', 'Only Total', 'Standard', 'Year Aggregate', 'testing']
         selected_settings[key] = st_loc.radio(
             'Data Options',
             options,
@@ -210,13 +207,13 @@ class Interface:
 
         # additional time classification settings
         # see "LEGACY" classification in user_utils
-        key = 'time_window'
-        st_loc.markdown("# Time Settings")
-        selected_settings[key] = st_loc.radio("How do you want to bound data in time?", 
-                               ["Legacy", "Current", "Both"], 
-                               index=2,
-                               key=tag+key
-                               )
+        #key = 'time_window'
+        #st_loc.markdown("# Time Settings")
+        #selected_settings[key] = st_loc.radio("How do you want to bound data in time?", 
+        #                       ["Legacy", "Current", "Both"], 
+        #                       index=2,
+        #                       key=tag+key
+        #                       )
 
         st_loc.markdown('# Data Settings')
 
@@ -272,7 +269,10 @@ class Interface:
         Returns:
             selected_settings: Current values in the dictionary the settings are stored in.
         '''
-    
+        groupings = self.config['groupings'] + self.config['metrics_options']
+        volunteer_metrics_list = list(self.config['metrics_options'])
+
+        nones = ["N/A", "none", ""]
         # Update the display defaults with any values that exist in the settings
         settings_dict = self.settings.get_settings(
             local_key=local_key,
@@ -288,14 +288,94 @@ class Interface:
             tag = ''
         else:
             tag += ':'
+        
+        df_cpy = df.copy()
+        df_cpy
+        if value == "AVC":
+            
+            def awai_filter(entry, j):
+                if entry not in nones:
+                    return j
+                else:
+                    return
+            def series_combinator(entry1=None, entry2=None):
+                if entry1 == None:
+                    if entry2 == None:
+                        return
+                    else:
+                        return entry2
+                else:
+                    if entry2 == None:
+                        return entry1
+                    else:
+                        return f"{entry1},{entry2}"
+            
+            for i in volunteer_metrics_list:
+                specific_series = df_cpy[i].apply(awai_filter, args=(i,))
 
-        if value in df.columns:
+                if i == volunteer_metrics_list[0]:
+                    totaled_series = specific_series
+                else:
+                    totaled_series = totaled_series.combine(specific_series, series_combinator)
+
+            df_cpy[value] = totaled_series
+
+        
+        df_cpy[value] = df_cpy[value].str.split(',')
+        df_cpy = df_cpy.explode(value)
+        df_cpy[value] = df_cpy[value].str.strip()
+
+        
+        # if volunteer metrics is selected as count, we sum over the entire visits dataframe and output the top x many
+        # (by metric selected) as a lineplot
+        if value in volunteer_metrics_list:
+            key = tag + 'categorical'
+            selected_settings.setdefault(key, {})
+
+            sort_type, ind1 = selectbox(
+                    st_loc,
+                    'How do you want to sort the data?',
+                    options=['ordered sort', 'manual select','totaled volunteers'],   
+                )
+            df_count = df_cpy.value_counts(value, ascending=False, dropna=True)
+
+            ### REMINDER - MAKEUPPERlimitUSERSPECIFIED
+            if sort_type == "manual select":
+                volunteer_options = pd.unique(df_cpy[value])
+                selected = st_loc.multiselect(label="Specific {} volunteers to display".format(value),
+                                          options=volunteer_options,
+                                          default=None,
+                                          max_selections=20,
+                                          placeholder="enter volunteer"
+                                          )
+                contributers_list = selected
+            #    contributers_list = [df_count.index[i] for i in range(len(df_count))]
+            #    self.settings.common['data']['data_options'] = "Only Total"
+            elif sort_type == "ordered sort":
+                # add text here, explaining what it does?
+                num_entries = len(pd.unique(df_cpy[value]))
+                if num_entries > 20:
+                    num_entries = 20
+                count = st_loc.slider("Top X many {} to dispay".format(value), 1, num_entries, 1)
+                contributers_list = [df_count.index[i] for i in range(count)]
+            elif sort_type == "totaled volunteers":
+                self.settings.common['data']['data_options'] = "Only Total"
+                
+                contributers_list = [df_count.index[i] for i in range(len(df_count)) if (df_count.index[i] not in nones)]
+                
+
+            selected_settings[key][value] = contributers_list
+        
+        elif value in df_cpy.columns:
             key = 'categorical'
             current = selected_settings.setdefault(key, {})
             key=tag + key
             
             
-            possible_columns = pd.unique(df[value])
+            possible_columns = list(pd.unique(df_cpy[value], ))
+            if value=="AVC":
+                possible_columns = [x for x in possible_columns if (x is not None)]
+            
             # Check the current values then the passed-in defaults
             # for a default
             default = current.get(value, possible_columns)
@@ -306,28 +386,9 @@ class Interface:
                 default=default,
                 key=tag + key + ':' + value
             )
-        
-        # if visitor institutions or host is selected as count, we sum over the entire visits dataframe and output the top x many
-        # (by metric selected) as a lineplot
-        elif (("Visitor Institution:" in value) or ("Host:" in value)):
-            key = tag + 'categorical'
-            selected_settings.setdefault(key, {})
-            value_seperated = value.split(':')
-            is_ascending = False
-            if 'ascending' in value_seperated[1]:
-                is_ascending = True
-            df_count = df.value_counts(value_seperated[0], ascending=is_ascending)
 
-            ### REMINDER - MAKEUPPERlimitUSERSPECIFIED
-            if 'All' in value_seperated[1]:
-                contributers_list = [df_count.index[i] for i in range(len(df_count))]
-                self.settings.common['data']['data_options'] = "Only Total"
-            else:
-                count = st_loc.slider("how many {}s do you want to display?".format(value_seperated[0]), 1, 30, 5)
-                contributers_list = [df_count.index[i] for i in range(count)]
-
-            selected_settings[key][value_seperated[0]] = contributers_list
-        return selected_settings
+        temporary_dataset = df_cpy
+        return temporary_dataset, selected_settings
 
     def request_view_settings(
             self,

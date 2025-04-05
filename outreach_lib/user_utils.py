@@ -114,7 +114,7 @@ def clean_data(raw_df, config):
     cleaned_df.dropna(
         axis='rows',
         how='any',
-        subset=['Event Title', 'Event Type', 'Date', 'Location', 'Funding Source', 'Total Attendees'],  
+        subset=['Event Title', 'Event Type', 'Date',],  
         inplace=True,
     )
     # # Drop drafts
@@ -129,6 +129,16 @@ def clean_data(raw_df, config):
         cleaned_df[str_column] = cleaned_df[str_column].str.replace('&amp;', '&')
 
 
+    AVERAGE_NUM_ATTENDEES = 10
+    def resolve_numerical(entry):
+        try:
+            entry = int(entry)
+        except:
+            entry = AVERAGE_NUM_ATTENDEES
+        
+        return entry
+        
+    cleaned_df['Total Attendees'] = cleaned_df['Total Attendees'].apply(resolve_numerical)
     # Handle NaNs, rounding, and other numerical errors
     #cleaned_df[columns_to_fill] = cleaned_df[columns_to_fill].apply(round)
     cleaned_df.fillna(value='N/A', inplace=True)
@@ -171,18 +181,19 @@ def preprocess_data(cleaned_df, config):
 
 
     #Now explode the data
-    for group_by_i in config['groupings']:
-        preprocessed_df[group_by_i] = preprocessed_df[group_by_i].str.split('|')
+    '''
+    groupings = config['groupings'] + config['metrics_options']
+    for group_by_i in groupings:
+        preprocessed_df[group_by_i] = preprocessed_df[group_by_i].str.split(',')
         preprocessed_df = preprocessed_df.explode(group_by_i)
-
+        preprocessed_df[group_by_i] = preprocessed_df[group_by_i].str.strip()
+    '''
+    
     # Exploding the data results in duplicate IDs,
     # so let's set up some new, unique IDs.
-    #preprocessed_df['id'] = preprocessed_df.index
+    preprocessed_df['id'] = preprocessed_df.index
     preprocessed_df.set_index(np.arange(len(preprocessed_df)), inplace=True)
 
-    # flags all data that has end date of pre-Jan 1st, 2014 as "LEGACY" - 
-    #  @ request of Kari
-    
     preprocessed_df['Date'] = pd.to_datetime(preprocessed_df['Date'], errors='coerce')
 
 
@@ -194,11 +205,6 @@ def preprocess_data(cleaned_df, config):
             return "CURRENT"
     
     preprocessed_df['Legacy'] = preprocessed_df['Date'].apply(legacy)
-
-    
-    ## SHOULD remove any spaces before or after categories; allowing a bit more flexibility in data entry
-    #for group_by_i in config['groupings']:
-    #    preprocessed_df[group_by_i] = preprocessed_df[group_by_i].str.strip()
 
     # This flag exists just to demonstrate you can modify the config
     # during the user functions

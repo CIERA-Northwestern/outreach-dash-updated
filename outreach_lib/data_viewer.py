@@ -18,6 +18,8 @@ import matplotlib.figure
 import matplotlib.patheffects as patheffects
 import seaborn as sns
 
+import plotly.graph_objects as go
+import plotly.express as px
 from .data_handler import DataHandler
 from .settings import Settings
 
@@ -237,15 +239,19 @@ class DataViewer:
             ax.set_ylim(y_lim)
 
         # Ticks
+        '''
         if xtick_spacing is None:
-            ax.set_xticks(xs.astype(int))
+            if df.index.name == "Reindexed Month":
+                ax.set_xticks(xs.astype(str))
+            else:
+                ax.set_xticks(xs.astype(int))
         else:
             count_ticks = np.arange(x_lim[0], x_lim[1], xtick_spacing)
             ax.set_xticks(count_ticks)
         if ytick_spacing is not None:
             count_ticks = np.arange(y_lim[0], y_lim[1], ytick_spacing)
             ax.set_yticks(count_ticks)
-
+        '''
         if include_legend:
             l = ax.legend(
                 bbox_to_anchor = (legend_x, legend_y),
@@ -285,8 +291,51 @@ class DataViewer:
         print(color_set)
         print(len(color_set))
         '''
-        print(df.index) 
+        #print(df.index) 
         st.bar_chart(df, y='Aggregate', x_label=x_label, y_label=y_label, color="Aggregate")
+
+    
+    def testplot(
+        self,
+        df: pd.DataFrame,
+        month_reindex: list[int] = None,
+        year_reindex: list[int] = None,
+        totals: pd.Series = None,
+        x_label: str = None,
+        y_label: str = None,
+        category: str = None,
+        ):
+        fig = go.Figure()
+        xs = df.index
+        #print(xs)
+
+        #print(totals)
+        if totals is not None:
+            #print(xs)
+            #print(len(xs))
+            df['totals'] = totals.to_list()
+        categories = df.columns
+        
+        for category_j in list(categories):
+            ys = df[category_j]
+            #print(ys)
+            fig.add_trace(go.Scatter(x=xs, y=ys, name=category_j))
+        
+        fig.update_layout(
+            title=f'{category} by {x_label}',
+            xaxis_title=x_label,
+            yaxis_title= y_label,
+            hovermode='closest',
+            plot_bgcolor='white',
+            xaxis=dict(gridcolor='lightgray'),
+            yaxis=dict(gridcolor='lightgray')
+        )
+
+        st.write(fig)
+
+        return fig.to_html(full_html=False)
+
+
 
 
     def stackplot(

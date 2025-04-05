@@ -14,3 +14,5 @@ jupyter
 jupyterlab
 jupyter_contrib_nbextensions
 root-dash
+calendar
+plotly
