@@ -10,5 +10,4 @@ PyYAML
 streamlit
 #pytest
 #ipython
-calendar
 plotly

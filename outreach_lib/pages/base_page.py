@@ -7,7 +7,6 @@ import copy
 import importlib
 import os
 import types
-import calendar
 import datetime
 
 import streamlit as st
@@ -140,7 +139,7 @@ def main(config_fp: str, user_utils: types.ModuleType = None):
         
         # extract real month, just to have
         def month_extractor(month):
-            return calendar.month_name[int(month)]
+            return reverse_month_dict[int(month)]
         data['windowed']['Calendar Month'] = data['windowed']['Date'].dt.month.apply(month_extractor)
 
     ### if no entries fall into this time window, we instantiate the whole graph with zeroes
@@ -197,7 +196,7 @@ def main(config_fp: str, user_utils: types.ModuleType = None):
         
         ### NEW ###
         if time_class == 'Reindexed Month':
-            xaxis = [calendar.month_name[i] for i in month_redef]
+            xaxis = [reverse_month_dict[i] for i in month_redef]
         elif time_class == 'Reindexed Year':
             xaxis = years_to_display
         

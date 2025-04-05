@@ -6,7 +6,6 @@ import types
 
 from typing import Tuple
 
-import calendar
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -163,10 +162,11 @@ class DataViewer:
             if sum(list(df[cols])) != 0:
                 is_empty = False
                 break
-        
+        reverse_month_dict = {1:'January', 2:'February', 3:'March', 4:'April', 5:'May',6:'June', 7:'July', 8:'August', 9:'September', 10:'October', 11:'November', 12:'December'}
+
         if not is_empty:
             if df.index.name == 'Reindexed Month':
-                plt.xticks(xs, [calendar.month_abbr[month_reindex[i-1]] for i in xs])
+                plt.xticks(xs, [reverse_month_dict[month_reindex[i-1]] for i in xs])
             elif df.index.name == 'Reindexed Year':
                 plt.xticks(xs, year_reindex)
         for j, category_j in enumerate(categories):
