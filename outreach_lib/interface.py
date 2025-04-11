@@ -214,7 +214,7 @@ class Interface:
         #                       key=tag+key
         #                       )
 
-        st_loc.markdown('# Data Settings')
+        #st_loc.markdown('# Data Settings')
 
 
 
@@ -393,12 +393,13 @@ class Interface:
             self,
             st_loc,
             ask_for: Union[list[str], str] = [
+                'view_mode',
                 'font_scale',
                 'seaborn_style',
                 'fig_width',
                 'fig_height',
                 'font',
-                'color_palette',
+                'include_legend',
            ],
             local_key: str = None,
             display_defaults: dict = {},
@@ -434,26 +435,10 @@ class Interface:
 
         available_settings = [
             'font_scale',
-            'seaborn_style',
-            'x_label',
-            'y_label',
-            'yscale',
-            'x_lim',
-            'y_lim',
-            'xtick_spacing',
-            'ytick_spacing',
-            'linewidth',
             'marker_size',
             'fig_width',
             'fig_height',
             'include_legend',
-            'legend_scale',
-            'legend_x',
-            'legend_y',
-            'legend_ha',
-            'legend_va',
-            'include_annotations',
-            'annotations_ha',
             'font',
             'color_palette',
             'category_colors',
@@ -480,129 +465,16 @@ class Interface:
         else:
             tag += ':'
 
-        key = 'x_label'
-        if key in ask_for:
-            selected_settings[key] = st_loc.text_input(
-                'x label',
-                value=display_defaults.get(key, default_x),
-                key=tag + key,
-            )
-        key = 'y_label'
-        if key in ask_for:
-            selected_settings[key] = st_loc.text_input(
-                'y label',
-                value=display_defaults.get(key, default_y),
-                key=tag + key,
-            )
-        key = 'yscale'
+        key = 'view_mode'
         if key in ask_for:
             value, ind = selectbox(
                 st_loc,
-                'y scale',
-                options=display_options.get(key, ['linear', 'log']),
-                index = display_defaults.get(key + '_ind', 0),
-                selectbox_or_radio='radio',
-                key=tag + key,
-                horizontal=True,
+                "choose line plot visual format",
+                options=["lines+markers", "lines", "markers"],
             )
             selected_settings[key] = value
             selected_settings[key + '_ind'] = ind
-        key = 'x_lim'
-        if key in ask_for:
-            lower_col, upper_col = st_loc.columns(2)
-            with lower_col:
-                default = display_defaults.get(key, '')
-                if default is None:
-                    default = ''
-                lower_lim = st_loc.text_input(
-                    'x lower limit',
-                    value=default,
-                    key=tag + key + 'lower',
-                )
-            with upper_col:
-                default = display_defaults.get(key, '')
-                if default is None:
-                    default = ''
-                upper_lim = st_loc.text_input(
-                    'x upper limit',
-                    value=default,
-                    key=tag + key + 'upper',
-                )
-            try:
-                # This only works if the user entered something well-formed.
-                selected_settings[key] = (float(lower_lim), float(upper_lim))
-            except ValueError:
-                selected_settings[key] = None
-        key = 'y_lim'
-        if key in ask_for:
-            lower_col, upper_col = st_loc.columns(2)
-            with lower_col:
-                default = display_defaults.get(key, '')
-                if default is None:
-                    default = ''
-                lower_lim = st_loc.text_input(
-                    'y lower limit',
-                    value=default,
-                    key=tag + key + 'lower',
-                )
-            with upper_col:
-                default = display_defaults.get(key, '')
-                if default is None:
-                    default = ''
-                upper_lim = st_loc.text_input(
-                    'y upper limit',
-                    value=default,
-                    key=tag + key + 'upper',
-                )
-            try:
-                # This only works if the user entered something well-formed.
-                selected_settings[key] = (float(lower_lim), float(upper_lim))
-            except ValueError:
-                selected_settings[key] = None
-        key = 'xtick_spacing'
-        if key in ask_for:
-            default = display_defaults.get(key, '')
-            if default is None:
-                default = ''
-            value = st_loc.text_input(
-                'x tick spacing',
-                value=default,
-                key=tag + key,
-            )
-            if value == '':
-                selected_settings[key] = None
-            else:
-                selected_settings[key] = float(value)
-        key = 'ytick_spacing'
-        if key in ask_for:
-            default = display_defaults.get(key, '')
-            if default is None:
-                default = ''
-            value = st_loc.text_input(
-                'y tick spacing',
-                value=default,
-                key=tag + key,
-            )
-            if value == '':
-                selected_settings[key] = None
-            else:
-                selected_settings[key] = float(value)
-        key = 'linewidth'
-        if key in ask_for:
-            selected_settings[key] = st_loc.slider(
-                'linewidth',
-                0.,
-                10.,
-                value=display_defaults.get(key, 2.)
-            )
-        key = 'marker_size'
-        if key in ask_for:
-            selected_settings[key] = st_loc.slider(
-                'marker size',
-                0.,
-                100.,
-                value=display_defaults.get(key, 50.)
-            )
+
         key = 'font_scale'
         if key in ask_for:
             selected_settings[key] = st_loc.slider(
@@ -644,6 +516,7 @@ class Interface:
                 value=display_defaults.get(key, fig_height),
                 key=tag + key,
             )
+        
         key = 'include_legend'
         if key in ask_for:
             selected_settings[key] = st_loc.checkbox(
@@ -651,75 +524,6 @@ class Interface:
                 value=display_defaults.get(key, True),
                 key=tag + key,
             )
-        if selected_settings.get('include_legend', False):
-            key = 'legend_scale'
-            if key in ask_for:
-                selected_settings[key] = st_loc.slider(
-                    'legend scale',
-                    0.1,
-                    2.,
-                    value=display_defaults.get(key, 1.32),
-                    key=tag + key,
-                )
-            key = 'legend_x'
-            if key in ask_for:
-                selected_settings[key] = st_loc.slider(
-                    'legend x',
-                    0.,
-                    1.5,
-                    value=display_defaults.get(key, 0.),
-                    key=tag + key,
-                )
-            key = 'legend_y'
-            if key in ask_for:
-                selected_settings[key] = st_loc.slider(
-                    'legend y',
-                    0.,
-                    1.5,
-                    value=display_defaults.get(key, 1.4),
-                    key=tag + key,
-                )
-            key = 'legend_ha'
-            if key in ask_for:
-                value, ind = selectbox(
-                    st_loc,
-                    'legend horizontal alignment',
-                    ['left', 'center', 'right'],
-                    index = display_defaults.get(key + '_ind', 0),
-                    key=tag + key,
-                )
-                selected_settings[key] = value
-                selected_settings[key + '_ind'] = ind
-            key = 'legend_va'
-            if key in ask_for:
-                value, ind = selectbox(
-                    st_loc,
-                    'legend vertical alignment',
-                    ['upper', 'center', 'lower'],
-                    index = display_defaults.get(key + '_ind', 0),
-                    key=tag + key,
-                )
-                selected_settings[key] = value
-                selected_settings[key + '_ind'] = ind
-        key = 'include_annotations'
-        if key in ask_for:
-            selected_settings[key] = st_loc.checkbox(
-                'include annotations',
-                value=display_defaults.get(key, False),
-                key=tag + key,
-            )
-        if selected_settings.get('include_annotations', False):
-            key = 'annotations_ha'
-            if key in ask_for:
-                value, ind = selectbox(
-                    st_loc,
-                    'annotations horizontal alignment',
-                    ['left', 'center', 'right'],
-                    index = display_defaults.get(key + '_ind', 0),
-                    key=tag + key,
-                )
-                selected_settings[key] = value
-                selected_settings[key + '_ind'] = ind
         key = 'color_palette'
         if key in ask_for:
             value, ind = selectbox(

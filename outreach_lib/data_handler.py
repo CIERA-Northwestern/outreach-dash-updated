@@ -21,7 +21,7 @@ class DataHandler:
         self.config = config
         self.user_utils = user_utils
 
-    def load_data(self, config: dict) -> Tuple[pd.DataFrame, dict]:
+    def load_data(self, data, config: dict) -> Tuple[pd.DataFrame, dict]:
         '''Load the data using the stored config and user_utils.
 
         This is one of the only functions where we allow the config
@@ -32,7 +32,7 @@ class DataHandler:
             raw_df: The data.
             config: The config file. This will also be stored at self.config
         '''
-        raw_df, config = self.user_utils.load_data(config)
+        raw_df, config = self.user_utils.load_data(data, config)
 
         return raw_df, config
 

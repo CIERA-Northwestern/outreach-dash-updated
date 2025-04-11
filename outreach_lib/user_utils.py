@@ -11,7 +11,7 @@ import datetime
 from outreach_lib import utils
 
 
-def load_data(config):
+def load_data(data, config):
     '''Modify this!
     
     This is the main function for loading the data
@@ -31,39 +31,37 @@ def load_data(config):
 
     ##########################################################################
     # Filepaths
+    if data is None:
+        input_dir = os.path.join(config['data_dir'], config['input_dirname'])
 
-    input_dir = os.path.join(config['data_dir'], config['input_dirname'])
+        def get_fp_of_most_recent_file(pattern):
+            '''Get the filepath of the most-recently created file matching
+            the pattern. We just define this here because we use it twice.
 
-    def get_fp_of_most_recent_file(pattern):
-        '''Get the filepath of the most-recently created file matching
-        the pattern. We just define this here because we use it twice.
+            Args:
+                pattern (str): The pattern to match.
 
-        Args:
-            pattern (str): The pattern to match.
+            Returns:
+                fp (str): The filepath of the most-recently created file
+                    matching the pattern.
+            '''
+            fps = glob.glob(pattern)
+            ind_selected = np.argmax([os.path.getctime(_) for _ in fps])
+            return fps[ind_selected]
 
-        Returns:
-            fp (str): The filepath of the most-recently created file
-                matching the pattern.
-        '''
-        fps = glob.glob(pattern)
-        ind_selected = np.argmax([os.path.getctime(_) for _ in fps])
-        return fps[ind_selected]
+        data_pattern = os.path.join(input_dir, config['website_data_file_pattern'])
+        data_fp = get_fp_of_most_recent_file(data_pattern)
+    else:
+        data_fp = data
 
-    data_pattern = os.path.join(input_dir, config['website_data_file_pattern'])
-    data_fp = get_fp_of_most_recent_file(data_pattern)
+    ### outreach specific
+    if data is None:
+        head_col = 0
+    else:
+        head_col = 1
 
-
-    # press_office_pattern = os.path.join(
-    #     input_dir, config['press_office_data_file_pattern']
-    # )
-    # press_office_data_fp = get_fp_of_most_recent_file(press_office_pattern)
-
-    ##########################################################################
-    # Load data
-
-    # Website data
-    #os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    website_df = pd.read_csv(data_fp, encoding_errors='ignore')
+    website_df = pd.read_csv(data_fp, header=head_col, encoding_errors='ignore')
+    
     #website_df['id'] = website_df.index
     website_df.set_index(np.arange(len(website_df)), inplace=True)
     #website_df.set_index('Calendar Group', inplace=True)
@@ -79,11 +77,10 @@ def load_data(config):
 
     # # Combine the data
     # raw_df = website_df.join(press_df)
-
     return website_df, config
 
 
-def clean_data(raw_df, config):
+def clean_data(raw_df: pd.DataFrame, config):
     '''Modify this!
     
     This is the main function for cleaning the data,
@@ -108,6 +105,17 @@ def clean_data(raw_df, config):
     # Drop rows where 'Date' year is 1970
 
     cleaned_df = raw_df[raw_df['Date'] != 0]
+    ## specific naming conventions
+
+    cleaned_df = cleaned_df.rename(columns={'Event/Activity Title ':'Event Title',
+                       'Type of Event':'Event Type',
+                       'Grad Students (if none, enter "None")': 'Grad Students',
+                       'Postdocs  (if none, enter "None")': 'Postdocs',
+                       'Faculty  (if none, enter "None")':'Faculty',
+                       'Staff (if none, enter "None")':'Staff',
+                       'Total # of Attendees (approximate)': 'Total Attendees',
+                       'Funding Source (please list all funding sources for the event, including CIERA, and/or specific grants if you know them)': 'Funding Source'
+                        })
     
     # Drop weird articles---ancient ones w/o a title or year
     # Timestamp,Event/Activity Title ,Type of Event,Short description,Date,"Location (Venue, City, State, as applicable)","Funding Source (please list all funding sources for the event, including CIERA, and/or specific grants if you know them)","Grad Students (if none, enter ""None"")","Postdocs  (if none, enter ""None"")","Faculty  (if none, enter ""None"")","Staff (if none, enter ""None"")",Primary Audience Type,Is this event focused on an underrepresented group in STEM? ,Total # of Attendees (approximate),Additional description of audience,Feedback from Audience,"Contact Info (e.g. name of organization, name of contact person, email address, etc.)",Notes/Comments on partners,Final Thoughts

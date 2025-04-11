@@ -37,10 +37,15 @@ def get_year(date, start_of_year='January 1', years_min=None, years_max=None, de
         freq = pd.offsets.DateOffset(years=1),
         inclusive="left",
     )
+
+    bin_labels = []
+    for i in date_bins[:-1]:
+        bin = pd.Timestamp(i)
+        bin = bin + pd.offsets.DateOffset(months=12) - pd.offsets.DateOffset(days=1)
+        bin_labels.append(bin.year)
+
     
-    date_bin_labels = date_bins.year[:-1]
-    #print(date_bin_labels)
     # The actual binning
-    years = pd.cut(date, date_bins, right=False, labels=date_bin_labels).astype('Int64')
+    years = pd.cut(date, date_bins, right=False, labels=bin_labels).astype('Int64')
 
     return years

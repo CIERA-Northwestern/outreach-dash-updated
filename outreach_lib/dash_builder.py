@@ -57,15 +57,15 @@ class DashBuilder:
         # Check if we're in the directory the script is in,
         # which should also be the directory the config is in.
         # If not, move into that directory
-        if os.getcwd() != config_dir:
-            os.chdir(config_dir)
+        #if os.getcwd() != config_dir:
+        #    os.chdir(config_dir)
 
         with open(config_fn, "r", encoding='UTF-8') as file:
             config = yaml.load(file, Loader=yaml.FullLoader)
         return config
 
     @st.cache_data
-    def prep_data(_self, config: dict) -> pd.DataFrame:
+    def prep_data(_self, config: dict, dataset=None) -> pd.DataFrame:
         '''Load, clean, and preprocess the data.
 
         *Note*: calculations cannot depend on any values updated during
@@ -95,7 +95,7 @@ class DashBuilder:
         print(msg)
         with st.spinner(msg):
             data = {}
-            data['raw'], config = _self.data_handler.load_data(config)
+            data['raw'], config = _self.data_handler.load_data(dataset, config)
             data['cleaned'], config = _self.data_handler.clean_data(data['raw'], config)
             data['preprocessed'], config = _self.data_handler.preprocess_data(data['cleaned'], config)
 
