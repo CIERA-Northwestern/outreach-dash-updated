@@ -304,6 +304,7 @@ class DataViewer:
         x_label: str = None,
         y_label: str = None,
         category: str = None,
+        view_mode: str=None
         ):
         fig = go.Figure()
         xs = df.index
@@ -319,7 +320,7 @@ class DataViewer:
         for category_j in list(categories):
             ys = df[category_j]
             #print(ys)
-            fig.add_trace(go.Scatter(x=xs, y=ys, name=category_j))
+            fig.add_trace(go.Scatter(x=xs, y=ys, mode=view_mode, name=category_j))
         
         fig.update_layout(
             title=f'{category} by {x_label}',

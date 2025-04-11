@@ -304,7 +304,8 @@ def main(config_fp: str, user_utils: types.ModuleType = None):
                     year_reindex = years_to_display,
                     y_label=builder.settings.common['data']['y_column'],
                     x_label=builder.settings.common['data']['x_column'],
-                    category=builder.settings.common['data']['groupby_column']
+                    category=builder.settings.common['data']['groupby_column'],
+                    view_mode=builder.settings.common['view']['view_mode']
                 )
             elif data_option == "Only Total":
                 builder.data_viewer.testplot(
@@ -313,7 +314,8 @@ def main(config_fp: str, user_utils: types.ModuleType = None):
                     year_reindex=years_to_display,
                     y_label=builder.settings.common['data']['y_column'],
                     x_label=builder.settings.common['data']['x_column'],
-                    category=builder.settings.common['data']['groupby_column']
+                    category=builder.settings.common['data']['groupby_column'],
+                    view_mode=builder.settings.common['view']['view_mode']
                     #**builder.settings.get_settings(local_key)
                 )
             elif data_option == "Standard":
@@ -324,7 +326,8 @@ def main(config_fp: str, user_utils: types.ModuleType = None):
                     totals = data['totals'],
                     y_label=builder.settings.common['data']['y_column'],
                     x_label=builder.settings.common['data']['x_column'],
-                    category=builder.settings.common['data']['groupby_column']
+                    category=builder.settings.common['data']['groupby_column'],
+                    view_mode=builder.settings.common['view']['view_mode']
                 )
         # Bar Plot IF data option is aggregated
         elif data_option == "Year Aggregate":
